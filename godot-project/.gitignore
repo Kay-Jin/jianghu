@@ -1,0 +1,16 @@
+# Godot
+.godot/
+*.import/
+*.translation
+
+# Python
+__pycache__/
+*.pyc
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
