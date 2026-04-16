@@ -1,0 +1,35 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/test_battle.gd" id="1_test"]
+[ext_resource type="Texture2D" path="res://assets/characters/protagonist.png" id="2_protag"]
+
+[node name="TestBattle" type="Node2D"]
+script = ExtResource("1_test")
+
+[node name="Player" type="Sprite2D" parent="."]
+position = Vector2(960, 540)
+texture = ExtResource("2_protag")
+scale = Vector2(0.6, 0.6)
+
+[node name="PlayerLabel" type="Label" parent="Player"]
+offset_left = -30.0
+offset_top = 30.0
+offset_right = 30.0
+offset_bottom = 50.0
+text = "主角"
+horizontal_alignment = 1
+
+[node name="Grid" type="TileMap" parent="."]
+
+[node name="InfoLabel" type="Label" parent="."]
+offset_left = 20.0
+offset_top = 20.0
+offset_right = 400.0
+offset_bottom = 100.0
+text = "🎮 江湖打工人 - 战斗测试
+
+✅ 主角立绘已加载
+✅ 六边形网格已配置
+
+按 F5 运行测试"
+multiline = true
