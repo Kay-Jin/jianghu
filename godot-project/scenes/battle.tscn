@@ -1,0 +1,205 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/battle_scene.gd" id="1_scene"]
+[ext_resource type="Script" path="res://scripts/battle_controller.gd" id="2_controller"]
+[ext_resource type="Script" path="res://scripts/battle_effects.gd" id="3_effects"]
+
+[node name="BattleScene" type="Node2D"]
+script = ExtResource("1_scene")
+
+[node name="BattleController" type="Node2D" parent="."]
+script = ExtResource("2_controller")
+
+[node name="BattleTileMap" type="TileMap" parent="."]
+
+[node name="RangeOverlay" type="CanvasLayer" parent="."]
+
+[node name="BattleEffects" type="Node2D" parent="."]
+script = ExtResource("3_effects")
+
+[node name="UI" type="CanvasLayer" parent="."]
+
+[node name="TurnInfo" type="Panel" parent="UI"]
+anchors_preset = 5
+anchor_left = 0.5
+anchor_top = 0.0
+anchor_right = 0.5
+anchor_bottom = 0.0
+offset_left = -200.0
+offset_top = 10.0
+offset_right = 200.0
+offset_bottom = 50.0
+grow_horizontal = 2
+
+[node name="TurnLabel" type="Label" parent="UI/TurnInfo"]
+layout_mode = 2
+text = "回合信息"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="UnitInfoPanel" type="Panel" parent="UI"]
+visible = false
+anchors_preset = 1
+anchor_left = 0.0
+anchor_top = 0.0
+anchor_right = 0.0
+anchor_bottom = 0.0
+offset_left = 10.0
+offset_top = 60.0
+offset_right = 260.0
+offset_bottom = 180.0
+
+[node name="UnitName" type="Label" parent="UI/UnitInfoPanel"]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 0.0
+anchor_right = 0.5
+anchor_bottom = 0.0
+offset_left = -50.0
+offset_top = 5.0
+offset_right = 50.0
+offset_bottom = 25.0
+grow_horizontal = 2
+text = "单位名"
+
+[node name="UnitHP" type="Label" parent="UI/UnitInfoPanel"]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 0.35
+anchor_right = 0.5
+anchor_bottom = 0.35
+offset_left = -80.0
+offset_top = -10.0
+offset_right = 80.0
+offset_bottom = 10.0
+grow_horizontal = 2
+text = "HP: 100/100"
+
+[node name="UnitMP" type="Label" parent="UI/UnitInfoPanel"]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 0.65
+anchor_right = 0.5
+anchor_bottom = 0.65
+offset_left = -80.0
+offset_top = -10.0
+offset_right = 80.0
+offset_bottom = 10.0
+grow_horizontal = 2
+text = "MP: 50/50"
+
+[node name="UnitStats" type="Label" parent="UI/UnitInfoPanel"]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -120.0
+offset_top = -15.0
+offset_right = 120.0
+offset_bottom = 5.0
+grow_horizontal = 2
+text = "攻击:25 防御:8 移动:4"
+
+[node name="ActionButtons" type="HBoxContainer" parent="UI"]
+visible = false
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -200.0
+offset_top = -60.0
+offset_right = 200.0
+offset_bottom = -20.0
+grow_horizontal = 2
+grow_vertical = 0
+
+[node name="AttackButton" type="Button" parent="UI/ActionButtons"]
+layout_mode = 2
+text = "⚔️ 攻击"
+
+[node name="SkillButton" type="Button" parent="UI/ActionButtons"]
+layout_mode = 2
+text = "🔮 武功"
+
+[node name="WaitButton" type="Button" parent="UI/ActionButtons"]
+layout_mode = 2
+text = "⏸️ 等待"
+
+[node name="EndTurnButton" type="Button" parent="UI"]
+visible = false
+anchors_preset = 9
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -150.0
+offset_top = -60.0
+offset_right = -10.0
+offset_bottom = -20.0
+grow_horizontal = 0
+grow_vertical = 0
+text = "🔄 结束回合"
+
+[node name="BattleLog" type="Panel" parent="UI"]
+anchors_preset = 6
+anchor_left = 0.0
+anchor_top = 1.0
+anchor_right = 0.0
+anchor_bottom = 1.0
+offset_left = 10.0
+offset_top = -200.0
+offset_right = 400.0
+offset_bottom = -10.0
+grow_vertical = 0
+
+[node name="LogText" type="TextEdit" parent="UI/BattleLog"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+custom_minimum_size = Vector2(0, 180)
+editable = false
+wrap_mode = 2
+text = "战斗日志:\n"
+
+[node name="BattleEndPanel" type="Panel" parent="UI"]
+visible = false
+anchors_preset = 13
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -150.0
+offset_top = -60.0
+offset_right = 150.0
+offset_bottom = 60.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="BattleEndLabel" type="Label" parent="UI/BattleEndPanel"]
+layout_mode = 2
+text = "战斗结束"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="RestartButton" type="Button" parent="UI/BattleEndPanel"]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -60.0
+offset_top = -40.0
+offset_right = 60.0
+offset_bottom = -10.0
+grow_horizontal = 2
+text = "🔄 重新开始"
