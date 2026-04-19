@@ -1,4 +1,4 @@
-# 🏃 Sprint 2 — 最终完成报告
+﻿# 🏃 Sprint 2 — 最终完成报告
 
 **完成时间：** 2026-04-17  
 **测试结果：** 16/16 ✅ 全部通过
@@ -37,7 +37,7 @@ battle_scene.gd, battle_controller.gd, battle_ui.gd, battle_effects.gd, battle_s
 | su_qingshang.png | 苏清商（冷艳御姐，雨意） |
 | yao_xinyi.png | 药辛夷（活泼萝莉，双马尾） |
 | tie_shan.png | 铁山/山贼头目（凶悍） |
-| ye_hanjiang.png | 叶寒江/喽啰 |
+| ye_hanjiang.png | 沈刃/喽啰 |
 | zhao_xiaoman.png | 赵小满（小乞丐，虎牙） |
 | lin_wanzhao.png | 林晚照（黄泉教圣女，忧郁） |
 

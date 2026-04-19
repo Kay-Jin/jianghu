@@ -1,21 +1,37 @@
 ; Engine configuration file.
-; Godot 4.3 Project - 江湖打工人
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
+
+config_version=5
+
+[animation]
+
+compatibility/default_parent_skeleton_in_mesh_instance_3d=true
+
 [application]
+
 config/name="JiangHu Worker"
 run/main_scene="res://scenes/main_menu.tscn"
-config/features=PackedStringArray("4.3")
+config/features=PackedStringArray("4.6")
+
+[autoload]
+
+GameData="*res://scripts/game_data.gd"
+GlobalState="*res://scripts/global_state.gd"
+SaveSystem="*res://scripts/save_system.gd"
 
 [display]
+
 window/size/viewport_width=1920
 window/size/viewport_height=1080
 window/handling=3
 
-[rendering]
-renderer/rendering_method="gl_compatibility"
-renderer/quality/filters/anti_aliasing=2
-environment/defaults/default_clear_color=Color(0.15, 0.12, 0.18, 1)
-
 [input]
+
 move_up={
 "deadzone": 0.2,
 "events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":87,"key_label":0,"unicode":119,"location":0,"echo":false,"script":null)
@@ -41,3 +57,9 @@ end_turn={
 "events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":32,"key_label":0,"unicode":32,"location":0,"echo":false,"script":null)
 ]
 }
+
+[rendering]
+
+renderer/rendering_method="gl_compatibility"
+environment/defaults/default_clear_color=Color(0.15, 0.12, 0.18, 1)
+renderer/quality/filters/anti_aliasing=2

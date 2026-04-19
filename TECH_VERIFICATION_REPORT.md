@@ -1,8 +1,26 @@
-# 🔬 技术验证报告 — Godot 4.x + 六边形战棋
+# 🔬 技术验证报告 — Unity 6 + 3D 武侠沙盒
 
-**日期：** 2026-04-16  
-**版本：** v1.0（最终确认版）  
-**结论：** ✅ Godot 4.x 完全可行，方案锁定
+**日期：** 2026-04-19（v2.0，Unity 3D 切换后）
+**历史版本：** v1.0（2026-04-16，Godot 4.x + 2D 六边形战棋，已废弃）
+**结论：** ✅ Unity 6 LTS 完全可行，方案锁定。
+
+---
+
+## 0. 技术栈变更说明
+
+| 维度 | 旧方案 (v1.0) | 新方案 (v2.0 当前) |
+|------|--------------|-------------------|
+| 引擎 | Godot 4.3 | **Unity 6 LTS (6000.0.x)** |
+| 渲染 | 2D (Viewport) | **3D + URP** |
+| 玩法核心 | 2D 六边形战棋回合制 | **3D 开放世界沙盒 + 实时战斗** |
+| 语言 | GDScript | **C#** |
+| 参考 | 古龙风云录 | **逸剑风云决 / 江湖十一 / 太吾绘卷（部分）** |
+
+**变更原因（Kay 决策）：**
+1. 目标体验从 **战棋叙事** 调整为 **开放世界沙盒（自由探索 + 武林游历）**。
+2. 3D 相较 2D 战棋在 **沉浸感、动作手感、现代玩家接受度** 上更强。
+3. Unity 在 **3D + 开放世界 + 资产生态（Asset Store / Mixamo / Addressables）** 更成熟。
+4. AI 美术素材（3D 模型 / 动画 / 贴图）近两年成熟度显著高于 2D 立绘叠加战棋方案。
 
 ---
 
@@ -10,164 +28,108 @@
 
 | 项目 | 决定 | 原因 |
 |------|------|------|
-| **引擎** | Godot 4.3 | 原生六边形支持，免费开源，2D 强项 |
-| **战斗类型** | 六边形战棋回合制 | 参考古龙风云录 |
-| **画面风格** | 2D 写实国风（AI 辅助生成） | 古龙风云录风格 |
-| **废弃方案** | SOON 平台 | 不适合复杂 RPG，偏小游戏工具 |
-
-**决策依据（已验证）：**
-1. Godot 4.x `TileMap` 原生支持 `CELL_SHAPE_HEXAGON` 模式
-2. Godot 4.x `AStarGrid2D` 提供网格寻路
-3. Godot Asset Library 有官方 2D Hexagonal Demo 项目
-4. GitHub 多个成熟开源参考
-5. SOON 经验证无法支持我们的战斗系统/任务量/分支深度
+| **引擎** | Unity 6 LTS (6000.0.x) | 3D 开放世界首选；C# 生态成熟；跨平台 |
+| **渲染管线** | URP (Universal Render Pipeline) | 性能/画面/可移植性平衡；支持 PBR 与后处理 |
+| **玩法类型** | 3D 开放世界武侠沙盒（单机） | 自由度 + 武林模拟 + 主线任务 |
+| **战斗** | 实时动作（锁定 + 技能键位）+ 轻 RPG | 参考逸剑风云决；非纯 ACT 也非纯回合 |
+| **视角** | 第三人称越肩 | Cinemachine 驱动 |
+| **脚本语言** | C# | Unity 官方；与编辑器深度整合 |
+| **数据** | ScriptableObject + JSON | 武功/物品/NPC 配置用 SO；存档用 JSON |
+| **AI 工作流** | Mixamo 动画 + Meshy 3D + SD/Nano-Banana 贴图 | 低成本单人可控 |
 
 ---
 
-## 二、Godot 4.x 核心能力验证
+## 二、Unity 6 核心能力验证
 
-### 2.1 六边形网格渲染
+### 2.1 第三人称角色控制
 
-```
-TileMap.TileShape enum:
-- CELL_SHAPE_SQUARE = 0     ← 方形网格
-- CELL_SHAPE_ISOMETRIC = 1  ← 等距网格
-- CELL_SHAPE_HEXAGON = 2    ← 六边形网格 ✅
+- `CharacterController` + 自写 `PlayerController.cs`：零依赖、手感可控。
+- **Cinemachine 3.x** `CinemachineCamera` + `3rd Person Follow`：越肩视角、碰撞避让、平滑跟随开箱即用。
+- 本仓库 `unity-project/Assets/Scripts/Player/ThirdPersonCamera.cs` 提供了不依赖 Cinemachine 的最小实现，便于初次跑通。
 
-TileMap.TileHalfOrientation:
-- CELL_HALF_OFFSET_HEIGHT = 0  ← 高度偏移
-- CELL_HALF_OFFSET_WIDTH = 1   ← 宽度偏移
-```
+### 2.2 场景与世界
 
-**验证结果：** Godot 原生支持六边形网格渲染，无需插件。
+- **SceneManagement** 分场景加载大地图。
+- **Addressables** 按需加载城镇 / 门派 / 支线场景，避免单场景过大。
+- **NavMesh** 内置 AI 寻路；`NavMeshAgent` 驱动 NPC 漫游。
+- **TimeOfDay 脚本** 驱动方向光旋转 + 天空盒 LUT 切换（本仓库已提供最小实现）。
 
-### 2.2 网格寻路（A* 算法）
+### 2.3 战斗系统
 
-```
-AStarGrid2D 核心功能:
-- region: 设置网格区域
-- cell_size: 设置格子大小
-- diagonal_mode: 对角线移动模式
-- update(): 更新寻路网格
-- get_id_path(from, to): 获取路径 ID
-- get_point_path(from, to): 获取路径坐标
-```
+| 特性 | Unity 实现方式 | 工作量 |
+|------|---------------|--------|
+| 角色移动/跳跃 | `CharacterController` 或 `Rigidbody` | ⭐ 原生 |
+| 锁定敌人 | 球形检测 `Physics.OverlapSphere` + UI 指示 | ⭐⭐ |
+| 动作事件 | `AnimationEvent` 触发伤害判定 | ⭐⭐⭐ |
+| 命中判定 | `BoxCast` / `OverlapBox` + `Damageable` | ⭐⭐ |
+| 武功（技能） | `ScriptableObject` 数据 + 组合技编排 | ⭐⭐⭐ |
+| 打击感（顿帧/震屏） | `Time.timeScale` 顿帧 + Cinemachine Impulse | ⭐⭐ |
+| 粒子特效 | VFX Graph / Shuriken | ⭐⭐⭐ |
+| 敌人 AI | NavMesh + 行为树 / FSM | ⭐⭐⭐ |
 
-**验证结果：** Godot 原生 AStarGrid2D 支持网格寻路。
+### 2.4 剧情与对话
 
-### 2.3 官方参考资源
+- **Yarn Spinner for Unity** 或 **Ink (Inkle)**：都免费开源，支持分支与标签触发。
+- UI 用 **UI Toolkit (UITK)** 或 **uGUI**；初期以 uGUI 快速推进。
 
-| 资源 | 链接 | 说明 |
+### 2.5 存档/读档
+
+- C# `System.Text.Json` 或 Newtonsoft.Json 将运行时数据序列化到 `Application.persistentDataPath/save.json`。
+- 本仓库 `unity-project/Assets/Scripts/Save/SaveSystem.cs` 提供最小可用实现。
+
+### 2.6 数值与配置
+
+- **ScriptableObject** 存 `MartialArt`、`Item`、`NpcProfile` 等静态数据，可直接在 Inspector 编辑 + 版本控制友好。
+
+---
+
+## 三、风险与应对
+
+| 风险 | 说明 | 应对 |
 |------|------|------|
-| 2D Hexagonal Demo | [Asset #2717](https://godotengine.org/asset-library/asset/2717) | Godot 官方六边形示例 |
-| Grid Navigation Demo | [Asset #2723](https://godotengine.org/asset-library/asset/2723) | AStarGrid2D 示例 |
-| Godot TileMap 文档 | [官方文档](https://docs.godotengine.org/en/stable/tutorials/2d/using_tilemaps.html) | TileMap 完整教程 |
+| 3D 美术工作量比 2D 大 | 开放世界需要模型/动画/贴图大量资产 | Mixamo（免费动画）+ Meshy/Kaedim（AI 3D）+ 购买 Asset Store 基础包 |
+| 开放世界性能 | 同屏内容多时易掉帧 | URP + LOD + Occlusion + Addressables 分块加载 |
+| 单人开发工时 | 3D RPG 一人开发周期长 | MVP 聚焦「1 村 1 城 1 章 + 1 套完整战斗」 |
+| Unity 版权政策 | 近年定价反复 | 选择 LTS；Personal 授权下 < 20 万美元营收免授权费；EA 阶段无虞 |
+| 学习曲线（C# + 3D） | 相比 GDScript 稍陡 | Unity Learn + 本仓库 `UNITY_QUICKSTART.md` 标准化入门 |
 
 ---
 
-## 三、战斗系统技术分解
+## 四、参考（同类型成品）
 
-### 3.1 古龙风云录战斗特性 → Godot 实现方案
-
-| 战斗特性 | Godot 实现方式 | 工作量 |
-|---------|---------------|--------|
-| **六边形网格渲染** | `TileMap` + `CELL_SHAPE_HEXAGON` | ⭐ 原生支持 |
-| **角色格子移动** | `AStarGrid2D` 寻路 | ⭐⭐ 少量代码 |
-| **回合制流程** | GDScript 状态机 | ⭐⭐⭐ 自己写逻辑 |
-| **移动范围显示** | BFS 算法计算可达格子 | ⭐⭐⭐ 自己写算法 |
-| **攻击范围显示** | BFS/范围算法 + 高亮 | ⭐⭐⭐ 自己写算法 |
-| **武功范围效果** | 方向+距离计算格子集合 | ⭐⭐⭐ 自己写算法 |
-| **面向系统（6方向）** | 六边形邻接关系天然支持 | ⭐⭐ 少量代码 |
-| **地形效果** | TileMap 多层 + 碰撞 | ⭐⭐ 配置工作 |
-| **连携/围攻加成** | 相邻格子检测算法 | ⭐⭐ 少量代码 |
-| **技能特效** | Godot GPUParticles2D + 动画 | ⭐⭐⭐⭐ 美术+动画 |
-| **角色立绘** | Sprite2D + AI 生成 PNG | ⭐⭐⭐ AI 生成 |
-| **对话系统** | Control 节点 + 富文本 | ⭐⭐⭐ 自己写 UI |
-
-### 3.2 需要从零开发的模块
-
-| 模块 | 预估工时 | 复杂度 |
-|------|---------|--------|
-| 战斗状态机（回合流程） | 2-3 天 | 中 |
-| 移动/攻击范围算法 | 2-3 天 | 中 |
-| 武功系统（范围/特效/伤害） | 3-4 天 | 高 |
-| 对话/剧情系统 | 3-4 天 | 中 |
-| 大地图/场景切换 | 2-3 天 | 中 |
-| 角色/属性/装备系统 | 3-4 天 | 中 |
-| 存档/读档系统 | 1-2 天 | 低 |
-
-**总计核心系统开发：** 约 16-23 天
-
-### 3.3 可以复用的开源参考
-
-- Godot Hex Tactical RPG 模板（GitHub 多个）
-- Turn-based combat 教程（YouTube/GitHub 大量资源）
-- Dialog system 插件（Godot 社区成熟方案）
-- Inventory/Equipment 模板
+| 游戏 | 可借鉴点 |
+|------|---------|
+| 逸剑风云决 | 3D 武侠 + 轻动作战斗 + 江湖游历节奏 |
+| 江湖十一 | 沙盒养成 + 自由度 + 人物好感 |
+| 太吾绘卷 | 武林模拟 + 传记 + 功法演化（深度参考玩法，不抄美术） |
+| 荒野之息 | 开放世界探索节奏（结构参考） |
 
 ---
 
-## 四、古龙风云录技术分析
+## 五、Unity vs Godot vs Unreal（最终版）
 
-### 4.1 游戏类型
-
-| 属性 | 值 |
-|------|------|
-| 开发商 | 河洛工作室 |
-| 引擎 | Unity（推测） |
-| 类型 | 2D 写实武侠 RPG |
-| 战斗 | 六边形格子战棋，回合制 |
-| 视角 | 2.5D 等距视角（斜角俯视） |
-| 对话 | 全屏 2D 立绘 + 对话框 |
-| 大地图 | 2D 水墨风格区域地图 |
-
-### 4.2 我们 vs 古龙风云录
-
-| 对比 | 古龙风云录 | 我们的游戏 |
-|------|-----------|-----------|
-| 引擎 | Unity | Godot 4.x |
-| 战斗 | 六边形战棋 | ✅ 同样六边形战棋 |
-| 画面 | 2D 写实手绘 | 2D 写实 + AI 辅助生成 |
-| 剧情 | 多分支多结局 | ✅ 更多分支和结局 |
-| 开发 | 专业团队 | 1 人 + AI |
-| 开发周期 | 3+ 年 | 目标 3-4 个月 MVP |
-
-### 4.3 关键差距和应对
-
-| 差距 | 我们的应对 |
-|------|-----------|
-| 团队规模（专业团队 vs 1 人） | 用 AI 生成美术，聚焦核心玩法 |
-| 开发时间（3 年 vs 3 个月） | 先做 MVP（序章 + 第1章），EA 上线后再迭代 |
-| 美术质量（手绘 vs AI 生成） | AI 生成 + 后期精修 |
-| 战斗打磨（3 年 vs 1 个月） | 参考成熟模板，不重新发明轮子 |
+| 维度 | Unity 6 | Godot 4.x | Unreal 5 |
+|------|--------|-----------|---------|
+| 3D 能力 | ✅ 强 | ⚠️ 可用但生态弱 | ✅ 顶级 |
+| 开放世界 | ✅ 成熟（Addressables/LOD/NavMesh） | ⚠️ 偏弱 | ✅ 强（但体量更大） |
+| 单人开发友好度 | ✅ 中等 | ✅ 最易 | ❌ 陡峭 |
+| C# 生态 | ✅ 最好 | ⚠️ GDScript 优先 | ❌ 以 C++/蓝图为主 |
+| AI 素材生态 | ✅ Asset Store + Mixamo | ⚠️ 较少 | ✅ Marketplace |
+| 出 Steam/EA | ✅ 直接 | ✅ 直接 | ✅ 直接 |
+| 授权费用 | ✅ Personal 免费（≤20 万美元营收） | ✅ MIT 完全免费 | ⚠️ 分成 5%（100 万美元以上） |
+| 适合本项目 | ✅ 最佳 | ⚠️ 切换前的方案 | ❌ 过重 |
 
 ---
 
-## 五、Godot vs Unity vs SOON 对比（最终版）
+## 六、后续行动（v2.0 路线图）
 
-| 维度 | Godot 4.x | Unity | SOON |
-|------|----------|-------|------|
-| 六边形支持 | ✅ 原生 TileMap | ⚠️ 需要插件 | ❌ 不支持 |
-| 2D 能力 | ✅ 强项 | ⚠️ 偏 3D | ❌ 弱 |
-| 回合制战棋 | ✅ 有社区模板 | ✅ 有社区模板 | ❌ 不支持 |
-| 学习曲线 | ✅ 简单（GDScript 像 Python） | ❌ C# 较陡 | ✅ 最简单 |
-| 导出 Steam | ✅ 直接导出 Windows/Mac | ✅ 直接导出 | ❌ 不确定 |
-| 开源免费 | ✅ MIT 协议，100% 免费 | ❌ 超收入需分成 | ❌ 未知 |
-| AI 美术适配 | ✅ 直接导入 PNG | ✅ 直接导入 PNG | ⚠️ 受限 |
-| 社区资源 | ✅ 活跃，教程多 | ✅ 最大社区 | ❌ 太小 |
-| 适合我们的项目 | ✅ 最佳选择 | ⚠️ 可以但更复杂 | ❌ 不可行 |
+1. ✅ **方案锁定** — Unity 6 LTS + URP + 3D 沙盒。
+2. ⏳ **Unity 6 LTS 安装** — 通过 Unity Hub 安装，见 `UNITY_QUICKSTART.md`。
+3. ⏳ **原型跑通** — 打开 `unity-project/`，运行 `SceneBootstrap.cs` 自动搭场景。
+4. ⏳ **美术素材首批** — 主角模型 + 2 套动画 + 1 套武功特效。
+5. ⏳ **小型村落 / 一条支线** — 作为 Demo v0.1 的内容核心。
+6. ⏳ **更新 Sprint 计划** — 以 Unity 维度重新排期（已更新 `SPRINT_1_PLAN.md`）。
 
 ---
 
-## 六、后续行动
-
-1. ✅ **方案锁定** — Godot 4.x，不再摇摆
-2. ⏳ **安装 Godot 4.3** — 已下载 `/tmp/Godot_v4.3-stable_linux.x86_64`
-3. ⏳ **创建项目** — 初始化 Godot 项目，配置六边形 TileMap
-4. ⏳ **战斗原型** — 先做一个最简六边形战棋 demo（3 天内）
-5. ⏳ **AI 美术** — 生成首批角色立绘和场景素材
-6. ⏳ **更新 Sprint 计划** — 基于 Godot 重新排期
-
----
-
-**这份报告是最终确认版，除非 Godot 出现无法克服的技术障碍，否则不再更换引擎。**
+**这份报告是 v2.0 最终确认版。除非 Unity 出现无法克服的技术障碍，否则不再更换引擎。**

@@ -1,0 +1,6 @@
+# Cursor / IDE local state (may contain MCP tokens)
+.cursor/
+
+# OS
+Thumbs.db
+Desktop.ini

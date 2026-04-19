@@ -1,5 +1,8 @@
-## 战斗场景 - 六边形战棋主场景
+﻿## 战斗场景 - 六边形战棋主场景
 extends Node2D
+
+const _BATTLE_UI_SCRIPT: GDScript = preload("res://scripts/battle_ui.gd")
+const _MARTIAL_FX: GDScript = preload("res://scripts/martial_art_effects.gd")
 
 var battle_controller_node: Node2D = null
 var ui_node: Node = null
@@ -14,10 +17,11 @@ var unit_sprites: Dictionary = {}
 var move_highlight_nodes: Array[Node2D] = []
 var attack_highlight_nodes: Array[Node2D] = []
 var _initialized: bool = false
+var _tile_map: TileMap = null
 
 var character_sprites = {
 	"主角": "res://assets/characters/protagonist.png",
-	"叶寒江": "res://assets/characters/ye_hanjiang.png",
+	"沈刃": "res://assets/characters/shen_ren.png",
 	"山贼头目": "res://assets/characters/tie_shan.png",
 	"山贼甲": "res://assets/characters/tie_shan.png",
 	"山贼乙": "res://assets/characters/tie_shan.png",
@@ -37,7 +41,10 @@ func _ready():
 		return
 	
 	_setup_hex_tilemap()
+	battle_controller_node.tile_map_for_range = _tile_map
+	_setup_sorting_layers()
 	_create_unit_sprites()
+	_setup_battle_camera()
 	
 	battle_controller_node.turn_changed.connect(_on_turn_changed)
 	battle_controller_node.unit_selected.connect(_on_unit_selected)
@@ -66,8 +73,10 @@ func _ready():
 	print("✅ 战斗场景初始化完成")
 
 func _setup_hex_tilemap():
-	var tile_map = get_node("BattleTileMap")
+	var tile_map: TileMap = get_node("BattleTileMap") as TileMap
 	if tile_map == null: return
+	_tile_map = tile_map
+	tile_map.z_index = 0
 	
 	var tile_set = TileSet.new()
 	tile_set.tile_shape = TileSet.TILE_SHAPE_HEXAGON
@@ -93,6 +102,36 @@ func _setup_hex_tilemap():
 	
 	print("✅ TileMap 配置完成")
 
+func _setup_sorting_layers() -> void:
+	var ov := get_node_or_null("RangeOverlay")
+	if ov:
+		ov.z_index = 12
+	var fx := get_node_or_null("BattleEffects")
+	if fx:
+		fx.z_index = 14
+
+func _cell_to_world(cell: Vector2i) -> Vector2:
+	if _tile_map == null:
+		return Vector2.ZERO
+	return _tile_map.to_global(_tile_map.map_to_local(cell))
+
+func _world_to_cell(world: Vector2) -> Vector2i:
+	if _tile_map == null:
+		return Vector2i.ZERO
+	return _tile_map.local_to_map(_tile_map.to_local(world))
+
+func _hex_draw_radius() -> float:
+	if _tile_map and _tile_map.tile_set:
+		var s := _tile_map.tile_set.tile_size
+		return minf(float(s.x), float(s.y)) * 0.48
+	return 28.0
+
+func _unit_marker_extent() -> float:
+	if _tile_map and _tile_map.tile_set:
+		var s := _tile_map.tile_set.tile_size
+		return minf(float(s.x), float(s.y)) * 0.38
+	return HEX_SIZE
+
 func _create_unit_sprites():
 	if battle_controller_node == null: return
 	
@@ -116,22 +155,25 @@ func _create_unit_sprites():
 				print("🖼️ 加载立绘：", unit["name"])
 		
 		if not sprite_added:
+			var ext := _unit_marker_extent()
 			var cr = ColorRect.new()
 			cr.color = Color(0.2, 0.6, 0.9, 0.9) if unit["type"] == "player" else Color(0.9, 0.3, 0.3, 0.9)
-			cr.size = Vector2(HEX_SIZE * 1.2, HEX_SIZE * 1.2)
-			cr.position = Vector2(-HEX_SIZE * 0.6, -HEX_SIZE * 0.6)
+			cr.size = Vector2(ext * 1.25, ext * 1.25)
+			cr.position = Vector2(-ext * 0.62, -ext * 0.62)
 			sprite_container.add_child(cr)
 		
 		var label = Label.new()
+		var ext2 := _unit_marker_extent()
 		label.text = unit["name"]
 		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		label.position = Vector2(-HEX_SIZE * 0.8, HEX_SIZE * 0.7)
+		label.position = Vector2(-ext2 * 0.9, ext2 * 0.85)
 		label.add_theme_color_override("font_color", Color.WHITE)
-		label.add_theme_font_size_override("font_size", 10)
-		label.size = Vector2(HEX_SIZE * 1.6, 14)
+		label.add_theme_font_size_override("font_size", 11)
+		label.size = Vector2(ext2 * 2.0, 16)
 		sprite_container.add_child(label)
 		
-		sprite_container.position = _hex_to_screen(unit["grid_pos"])
+		sprite_container.position = _cell_to_world(unit["grid_pos"])
+		sprite_container.z_index = 22
 		add_child(sprite_container)
 		unit_sprites[i] = sprite_container
 	
@@ -145,13 +187,14 @@ func _clear_highlights():
 
 func _highlight_move_range(center: Vector2i, max_range: int):
 	_clear_highlights()
-	var cells = HexUtils.get_cells_in_range(center, max_range)
+	var cells: Array[Vector2i]
+	if _tile_map:
+		cells = HexUtils.get_cells_in_range_tilemap(_tile_map, center, max_range, GRID_WIDTH, GRID_HEIGHT)
+	else:
+		cells = HexUtils.get_cells_in_range(center, max_range)
 	for cell in cells:
 		if cell == center: continue
-		var h = ColorRect.new()
-		h.color = Color(0.2, 0.8, 0.3, 0.3)
-		h.size = Vector2(HEX_SIZE * 1.4, HEX_SIZE * 1.4)
-		h.position = _hex_to_screen(cell) + Vector2(-HEX_SIZE * 0.7, -HEX_SIZE * 0.7)
+		var h := _make_hex_highlight(cell, Color(0.1, 0.95, 0.3, 0.72))
 		var ov = get_node_or_null("RangeOverlay")
 		(ov if ov else self).add_child(h)
 		move_highlight_nodes.append(h)
@@ -159,22 +202,40 @@ func _highlight_move_range(center: Vector2i, max_range: int):
 func _highlight_attack_range(center: Vector2i, weapon_range: int):
 	for node in move_highlight_nodes: node.queue_free()
 	move_highlight_nodes.clear()
-	var cells = HexUtils.get_cells_in_range(center, weapon_range)
+	var cells: Array[Vector2i]
+	if _tile_map:
+		cells = HexUtils.get_cells_in_range_tilemap(_tile_map, center, weapon_range, GRID_WIDTH, GRID_HEIGHT)
+	else:
+		cells = HexUtils.get_cells_in_range(center, weapon_range)
 	for cell in cells:
 		if cell == center: continue
-		var h = ColorRect.new()
-		h.color = Color(0.9, 0.3, 0.3, 0.3)
-		h.size = Vector2(HEX_SIZE * 1.4, HEX_SIZE * 1.4)
-		h.position = _hex_to_screen(cell) + Vector2(-HEX_SIZE * 0.7, -HEX_SIZE * 0.7)
+		var h := _make_hex_highlight(cell, Color(1.0, 0.28, 0.18, 0.62))
 		var ov = get_node_or_null("RangeOverlay")
 		(ov if ov else self).add_child(h)
 		attack_highlight_nodes.append(h)
 
+func _setup_battle_camera() -> void:
+	var cam := Camera2D.new()
+	cam.name = "BattleCamera"
+	add_child(cam)
+	cam.make_current()
+	var tl := _cell_to_world(Vector2i(0, 0))
+	var br := _cell_to_world(Vector2i(GRID_WIDTH - 1, GRID_HEIGHT - 1))
+	cam.position = (tl + br) * 0.5
+	var vp := get_viewport().get_visible_rect().size
+	var span: Vector2 = (br - tl) + Vector2(HEX_SIZE * 3.0, HEX_SIZE * 3.0)
+	var z: float = minf(vp.x / maxf(span.x, 1.0), vp.y / maxf(span.y, 1.0)) * 0.88
+	z = clampf(z, 0.55, 1.25)
+	cam.zoom = Vector2(z, z)
+
+func _world_pos_from_screen(screen_pos: Vector2) -> Vector2:
+	return get_viewport().get_canvas_transform().affine_inverse() * screen_pos
+
 func _unhandled_input(event):
 	if not _initialized: return
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-		var screen_pos = event.position
-		var hex_pos = _screen_to_hex(screen_pos)
+		var world_pos := _world_pos_from_screen(event.position)
+		var hex_pos := _world_to_cell(world_pos)
 		match battle_controller_node.current_state:
 			battle_controller_node.State.PLAYER_TURN_SELECT:
 				_try_select_unit_at(hex_pos)
@@ -194,7 +255,7 @@ func _try_move_to(hex_pos: Vector2i):
 	battle_controller_node.move_unit_to(hex_pos)
 
 func _try_attack_at(hex_pos: Vector2i):
-	if ui_node and "pending_martial_art" in ui_node:
+	if ui_node and ui_node.get_script() == _BATTLE_UI_SCRIPT:
 		var art_id: String = ui_node.pending_martial_art
 		if art_id != "":
 			for unit in battle_controller_node.units:
@@ -203,27 +264,37 @@ func _try_attack_at(hex_pos: Vector2i):
 					ui_node.pending_martial_art = ""
 					_clear_highlights()
 					return
-	else:
-		for unit in battle_controller_node.units:
-			if unit["grid_pos"] == hex_pos and unit["type"] == "enemy" and unit["alive"]:
-				battle_controller_node.attack_target(hex_pos)
-				return
+	for unit in battle_controller_node.units:
+		if unit["grid_pos"] == hex_pos and unit["type"] == "enemy" and unit["alive"]:
+			battle_controller_node.attack_target(hex_pos)
+			return
 
-func _hex_to_screen(hex_pos: Vector2i) -> Vector2:
-	var x = HEX_SIZE * (sqrt(3.0) * hex_pos.x + sqrt(3.0)/2.0 * (hex_pos.y & 1))
-	var y = HEX_SIZE * (3.0/2.0 * hex_pos.y)
-	return Vector2(x, y)
-
-func _screen_to_hex(screen_pos: Vector2) -> Vector2i:
-	var x = screen_pos.x / (HEX_SIZE * sqrt(3.0))
-	var y = screen_pos.y / (HEX_SIZE * 1.5)
-	return Vector2i(round(x), round(y))
+func _make_hex_highlight(cell: Vector2i, fill: Color) -> Node2D:
+	var wrap := Node2D.new()
+	wrap.position = _cell_to_world(cell)
+	var r := _hex_draw_radius()
+	var pts_local := PackedVector2Array()
+	for i in 6:
+		var a: float = -PI / 2.0 + float(i) * PI / 3.0
+		pts_local.append(Vector2(cos(a), sin(a)) * r)
+	var poly := Polygon2D.new()
+	poly.polygon = pts_local
+	poly.color = fill
+	wrap.add_child(poly)
+	var line := Line2D.new()
+	line.points = pts_local
+	line.closed = true
+	line.width = 3.0
+	line.default_color = Color(0.95, 1.0, 0.95, 0.9)
+	line.z_index = 1
+	wrap.add_child(line)
+	return wrap
 
 func animate_unit_move(unit_index: int):
 	if not unit_sprites.has(unit_index): return
 	var sprite = unit_sprites[unit_index]
 	var unit = battle_controller_node.units[unit_index]
-	var target_pos = _hex_to_screen(unit["grid_pos"])
+	var target_pos = _cell_to_world(unit["grid_pos"])
 	
 	if _sound_node:
 		_sound_node.play_move()
@@ -246,7 +317,17 @@ func animate_unit_move(unit_index: int):
 	await bounce.finished
 
 func _on_turn_changed(text: String):
-	if ui_node and ui_node.has_method("update_turn_text"): ui_node.update_turn_text(text)
+	if ui_node and ui_node.has_method("update_turn_text"):
+		ui_node.update_turn_text(text)
+	match battle_controller_node.current_state:
+		battle_controller_node.State.PLAYER_TURN_SELECT:
+			_clear_highlights()
+		battle_controller_node.State.PLAYER_ACTION:
+			if battle_controller_node.selected_unit_index >= 0:
+				var u: Dictionary = battle_controller_node.units[battle_controller_node.selected_unit_index]
+				_highlight_attack_range(u["grid_pos"], u["weapon_range"])
+		battle_controller_node.State.ENEMY_TURN, battle_controller_node.State.BATTLE_END:
+			_clear_highlights()
 
 func _on_unit_selected(unit_data: Dictionary):
 	if ui_node and ui_node.has_method("update_unit_info"): ui_node.update_unit_info(unit_data)
@@ -285,12 +366,12 @@ func _on_martial_art_used(attacker_index: int, target_index: int, art_name: Stri
 	
 	match art_name:
 		"断剑剑法":
-			MartialArtEffects.create_sword_slash(self, from_pos, to_pos, Color(0.8, 0.85, 1.0))
+			_MARTIAL_FX.call("create_sword_slash", self, from_pos, to_pos, Color(0.8, 0.85, 1.0))
 		"破军":
-			MartialArtEffects.create_cross_impact(self, to_pos, Color(1.0, 0.85, 0.15))
-			MartialArtEffects.create_explosion_particles(self, to_pos, Color(1.0, 0.85, 0.15), 25)
+			_MARTIAL_FX.call("create_cross_impact", self, to_pos, Color(1.0, 0.85, 0.15))
+			_MARTIAL_FX.call("create_explosion_particles", self, to_pos, Color(1.0, 0.85, 0.15), 25)
 		_:
-			MartialArtEffects.create_sword_slash(self, from_pos, to_pos)
+			_MARTIAL_FX.call("create_sword_slash", self, from_pos, to_pos)
 	
 	_effects_node.flash_unit_red(target_sprite, 0.3)
 	_effects_node.screen_shake(8.0, 0.2)

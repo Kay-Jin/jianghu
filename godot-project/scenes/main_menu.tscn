@@ -3,6 +3,12 @@
 [ext_resource type="Script" path="res://scripts/main_menu.gd" id="1_menu"]
 
 [node name="MainMenu" type="Control"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 script = ExtResource("1_menu")
 
 [node name="Background" type="ColorRect" parent="."]
@@ -10,93 +16,98 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-color = Color(0.1, 0.08, 0.15, 1)
-
-[node name="TitleLabel" type="Label" parent="."]
-layout_mode = 1
-anchors_preset = 7
-anchor_left = 0.5
-anchor_top = 0.3
-anchor_right = 0.5
-anchor_bottom = 0.3
-offset_left = -200.0
-offset_top = -30.0
-offset_right = 200.0
-offset_bottom = 30.0
-grow_horizontal = 2
-text = "🗡️ 江湖打工人"
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="SubtitleLabel" type="Label" parent="."]
-layout_mode = 1
-anchors_preset = 7
-anchor_left = 0.5
-anchor_top = 0.38
-anchor_right = 0.5
-anchor_bottom = 0.38
-offset_left = -150.0
-offset_top = -15.0
-offset_right = 150.0
-offset_bottom = 15.0
-grow_horizontal = 2
-text = "六边形战棋 RPG"
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="VBoxContainer" type="VBoxContainer" parent="."]
-layout_mode = 1
-anchors_preset = 7
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -100.0
-offset_top = -100.0
-offset_right = 100.0
-offset_bottom = 100.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/separation = 16
+color = Color(0.1, 0.08, 0.15, 1)
+
+[node name="CenterLayer" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MenuColumn" type="VBoxContainer" parent="CenterLayer"]
+layout_mode = 2
+theme_override_constants/separation = 14
 alignment = 1
 
-[node name="TutorialButton" type="Button" parent="VBoxContainer"]
+[node name="TitleLabel" type="Label" parent="CenterLayer/MenuColumn"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 32
+theme_override_colors/font_color = Color(0.95, 0.92, 0.85, 1)
+text = "🗡️ 江湖打工人"
+horizontal_alignment = 1
+
+[node name="SubtitleLabel" type="Label" parent="CenterLayer/MenuColumn"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+theme_override_colors/font_color = Color(0.75, 0.72, 0.85, 1)
+text = "六边形战棋 RPG"
+horizontal_alignment = 1
+
+[node name="Spacer" type="Control" parent="CenterLayer/MenuColumn"]
+custom_minimum_size = Vector2(0, 8)
+layout_mode = 2
+
+[node name="ContinueButton" type="Button" parent="CenterLayer/MenuColumn"]
+custom_minimum_size = Vector2(280, 44)
+layout_mode = 2
+text = "继续游戏"
+
+[node name="NewGameButton" type="Button" parent="CenterLayer/MenuColumn"]
+custom_minimum_size = Vector2(280, 44)
+layout_mode = 2
+text = "新游戏"
+
+[node name="TutorialButton" type="Button" parent="CenterLayer/MenuColumn"]
+custom_minimum_size = Vector2(280, 44)
 layout_mode = 2
 text = "📖 序章教学"
 
-[node name="StartButton" type="Button" parent="VBoxContainer"]
-layout_mode = 2
-text = "⚔️ 开始战斗"
-
-[node name="TownButton" type="Button" parent="VBoxContainer"]
+[node name="TownButton" type="Button" parent="CenterLayer/MenuColumn"]
+custom_minimum_size = Vector2(280, 44)
 layout_mode = 2
 text = "🏯 断剑山庄"
 
-[node name="MapButton" type="Button" parent="VBoxContainer"]
+[node name="MapButton" type="Button" parent="CenterLayer/MenuColumn"]
+custom_minimum_size = Vector2(280, 44)
 layout_mode = 2
 text = "🗺️ 世界大地图"
 
-[node name="SaveButton" type="Button" parent="VBoxContainer"]
+[node name="SaveButton" type="Button" parent="CenterLayer/MenuColumn"]
+custom_minimum_size = Vector2(280, 44)
 layout_mode = 2
 text = "💾 存档"
 
-[node name="LoadButton" type="Button" parent="VBoxContainer"]
+[node name="LoadButton" type="Button" parent="CenterLayer/MenuColumn"]
+custom_minimum_size = Vector2(280, 44)
 layout_mode = 2
 text = "📂 读档"
 
-[node name="AffectionButton" type="Button" parent="VBoxContainer"]
+[node name="AffectionButton" type="Button" parent="CenterLayer/MenuColumn"]
+custom_minimum_size = Vector2(280, 44)
 layout_mode = 2
 text = "💕 好感度"
 
-[node name="QuitButton" type="Button" parent="VBoxContainer"]
+[node name="SettingsButton" type="Button" parent="CenterLayer/MenuColumn"]
+custom_minimum_size = Vector2(280, 44)
+layout_mode = 2
+text = "灵敏度"
+
+[node name="QuitButton" type="Button" parent="CenterLayer/MenuColumn"]
+custom_minimum_size = Vector2(280, 44)
 layout_mode = 2
 text = "🚪 退出"
 
-[connection signal="pressed" from="VBoxContainer/TutorialButton" to="." method="_on_tutorial_button_pressed"]
-[connection signal="pressed" from="VBoxContainer/StartButton" to="." method="_on_start_button_pressed"]
-[connection signal="pressed" from="VBoxContainer/TownButton" to="." method="_on_town_button_pressed"]
-[connection signal="pressed" from="VBoxContainer/MapButton" to="." method="_on_map_button_pressed"]
-[connection signal="pressed" from="VBoxContainer/SaveButton" to="." method="_on_save_button_pressed"]
-[connection signal="pressed" from="VBoxContainer/LoadButton" to="." method="_on_load_button_pressed"]
-[connection signal="pressed" from="VBoxContainer/AffectionButton" to="." method="_on_affection_button_pressed"]
-[connection signal="pressed" from="VBoxContainer/QuitButton" to="." method="_on_quit_button_pressed"]
+[connection signal="pressed" from="CenterLayer/MenuColumn/ContinueButton" to="." method="_on_continue_button_pressed"]
+[connection signal="pressed" from="CenterLayer/MenuColumn/NewGameButton" to="." method="_on_new_game_button_pressed"]
+[connection signal="pressed" from="CenterLayer/MenuColumn/TutorialButton" to="." method="_on_tutorial_button_pressed"]
+[connection signal="pressed" from="CenterLayer/MenuColumn/TownButton" to="." method="_on_town_button_pressed"]
+[connection signal="pressed" from="CenterLayer/MenuColumn/MapButton" to="." method="_on_map_button_pressed"]
+[connection signal="pressed" from="CenterLayer/MenuColumn/SaveButton" to="." method="_on_save_button_pressed"]
+[connection signal="pressed" from="CenterLayer/MenuColumn/LoadButton" to="." method="_on_load_button_pressed"]
+[connection signal="pressed" from="CenterLayer/MenuColumn/AffectionButton" to="." method="_on_affection_button_pressed"]
+[connection signal="pressed" from="CenterLayer/MenuColumn/SettingsButton" to="." method="_on_settings_button_pressed"]
+[connection signal="pressed" from="CenterLayer/MenuColumn/QuitButton" to="." method="_on_quit_button_pressed"]

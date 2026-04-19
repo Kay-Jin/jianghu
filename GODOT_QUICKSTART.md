@@ -1,4 +1,13 @@
-# 🎮 Godot 操作指南 — 江湖打工人
+# 🎮 Godot 操作指南 — 江湖打工人（已归档 / DEPRECATED）
+
+> ⚠️ **本文档已于 2026-04-19 归档。**
+> 项目已从 **Godot 4.x + 2D 六边形战棋** 切换到 **Unity 6 LTS + 3D 武侠沙盒**。
+> 新入门请阅读 [`UNITY_QUICKSTART.md`](./UNITY_QUICKSTART.md)。
+> 旧的 `godot-project/` 目录仅作为历史存档保留，不再维护。
+
+**（以下内容为历史版本，仅供回溯参考）**
+
+---
 
 **写给 Kay 的快速上手手册**
 

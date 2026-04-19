@@ -1,8 +1,9 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://scripts/battle_scene.gd" id="1_scene"]
 [ext_resource type="Script" path="res://scripts/battle_controller.gd" id="2_controller"]
 [ext_resource type="Script" path="res://scripts/battle_effects.gd" id="3_effects"]
+[ext_resource type="Script" path="res://scripts/battle_ui.gd" id="4_ui"]
 
 [node name="BattleScene" type="Node2D"]
 script = ExtResource("1_scene")
@@ -12,12 +13,13 @@ script = ExtResource("2_controller")
 
 [node name="BattleTileMap" type="TileMap" parent="."]
 
-[node name="RangeOverlay" type="CanvasLayer" parent="."]
+[node name="RangeOverlay" type="Node2D" parent="."]
 
 [node name="BattleEffects" type="Node2D" parent="."]
 script = ExtResource("3_effects")
 
 [node name="UI" type="CanvasLayer" parent="."]
+script = ExtResource("4_ui")
 
 [node name="TurnInfo" type="Panel" parent="UI"]
 anchors_preset = 5
@@ -25,17 +27,45 @@ anchor_left = 0.5
 anchor_top = 0.0
 anchor_right = 0.5
 anchor_bottom = 0.0
-offset_left = -200.0
-offset_top = 10.0
-offset_right = 200.0
-offset_bottom = 50.0
+offset_left = -320.0
+offset_top = 8.0
+offset_right = 320.0
+offset_bottom = 72.0
 grow_horizontal = 2
 
 [node name="TurnLabel" type="Label" parent="UI/TurnInfo"]
-layout_mode = 2
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = -8.0
+offset_bottom = -8.0
+grow_horizontal = 2
+grow_vertical = 2
 text = "回合信息"
 horizontal_alignment = 1
 vertical_alignment = 1
+autowrap_mode = 3
+
+[node name="HintLabel" type="Label" parent="UI"]
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 0.88
+anchor_right = 0.5
+anchor_bottom = 0.88
+offset_left = -400.0
+offset_top = -28.0
+offset_right = 400.0
+offset_bottom = 8.0
+grow_horizontal = 2
+theme_override_colors/font_color = Color(0.85, 0.9, 0.95, 1)
+theme_override_font_sizes/font_size = 16
+text = ""
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 3
 
 [node name="UnitInfoPanel" type="Panel" parent="UI"]
 visible = false
